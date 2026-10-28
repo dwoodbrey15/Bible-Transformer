@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#151916">
+  <title>KJV · 200k parameters</title>
+  <style>
+    :root{color-scheme:dark;--bg:#151916;--panel:#1e241f;--line:#364137;--text:#ecebdf;--muted:#adb8a9;--gold:#dfc58c}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,sans-serif}
+    main{max-width:1050px;margin:auto;padding:38px 24px 70px}.eyebrow{text-transform:uppercase;letter-spacing:.18em;font-size:12px;color:var(--gold)}
+    h1{font:clamp(42px,7vw,72px)/1.06 Georgia,serif;letter-spacing:-.035em;margin:18px 0}h2{font:26px Georgia,serif;margin:0 0 18px}p{max-width:720px;color:var(--muted)}
+    .tag{display:inline-block;border:1px solid var(--line);border-radius:20px;padding:4px 12px;margin:0 6px 8px 0;font-size:12px;color:var(--muted)}
+    .status{margin:22px 0;padding:13px 17px;background:#252f26;border-left:3px solid var(--gold);white-space:pre-wrap;overflow-wrap:anywhere}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}.panel{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:25px;min-width:0}
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:26px 0}.metric{border-top:1px solid var(--line);padding-top:13px}.metric span{display:block;font-size:12px;color:var(--muted)}.metric strong{font:30px Georgia,serif}
+    .fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}label{font-size:13px;color:var(--muted);display:block}input,select,textarea{display:block;width:100%;margin-top:6px;border:1px solid var(--line);border-radius:7px;padding:10px;background:#141a15;color:var(--text);font:inherit}
+    textarea{min-height:80px;resize:vertical}button{border:1px solid var(--line);border-radius:7px;background:#2b372d;color:var(--text);padding:11px 15px;font-weight:600;cursor:pointer}button.primary{background:var(--gold);border-color:var(--gold);color:#1a201a}button:disabled{opacity:.4;cursor:default}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+    .actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}.small{font-size:12px;color:var(--muted)}.wide{grid-column:1/-1}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:15px/1.6 ui-monospace,monospace;color:#d9e2d4;max-height:240px;overflow:auto}.output{min-height:150px;font:21px/1.6 Georgia,serif;color:var(--text)}
+    canvas{display:block;width:100%;height:160px;margin-top:16px}a{color:var(--gold)}footer{margin-top:28px;color:var(--muted);font-size:12px}#importFile{display:none}
+    @media(max-width:650px){main{padding:24px 16px 45px}.grid{grid-template-columns:1fr}.panel{padding:20px}.metrics{grid-template-columns:1fr 1fr}h1{font-size:46px}}
+  </style>
+  <script src="vendor/tf.min.js"></script>
+</head>
+<body><main>
+  <div class="eyebrow">A language model, from the first word</div>
+  <h1>A smaller model.<br>One book.</h1>
+  <p>Train a small transformer from scratch on the King James Bible. All model updates happen on this device. Start with a short run to measure its speed.</p>
+  <div><span class="tag">205,376 parameters</span><span class="tag">4 transformer blocks</span><span class="tag">KJV text only</span><span class="tag" id="backend">Loading engine</span></div>
+  <div class="status" id="status" role="status" aria-live="polite">Loading the model and verifying the Bible corpus…</div>
+  <div class="metrics">
+    <div class="metric"><span>TRAINING STEPS</span><strong id="stepsValue">0</strong></div>
+    <div class="metric"><span>TRAIN LOSS · NATS/BYTE</span><strong id="lossValue">—</strong></div>
+    <div class="metric"><span>VALIDATION · BITS/BYTE</span><strong id="valValue">—</strong></div>
+    <div class="metric"><span>TRAINING BYTES / CORPUS SIZE</span><strong id="passesValue">0.00×</strong></div>
+  </div>
+  <div class="grid">
+    <section class="panel"><h2>01 / Train</h2>
+      <div class="fields">
+        <label>Additional steps<input id="runSteps" type="number" value="100" min="1" max="500000" step="1"></label>
+        <label>Batch size<select id="batch"><option value="1">1 · start here</option><option value="2">2</option><option value="4">4</option><option value="8">8</option></select></label>
+        <label>Context in bytes<select id="context"><option value="32">32 · minimal</option><option value="64" selected>64 · benchmark</option><option value="128">128 · better context</option><option value="256">256 · full context</option></select></label>
+        <label>Learning rate<input id="lr" type="number" value="0.0005" min="0.000001" max="0.01" step="0.0001"></label>
+      </div>
+      <div class="actions"><button class="primary" id="train" disabled>Start training</button><button id="stop" disabled>Stop & save</button><button id="validate" disabled>Validate</button></div>
+      <p class="small">Keep Safari visible and the screen awake. Locking your phone or switching apps can suspend training. Progress saves every 100 steps and when a run ends. Download a checkpoint for a durable backup.</p>
+      <p class="small">The first step compiles GPU shaders and may be slow. A 100-step run is a benchmark, not a trained language model. Increase context and batch size after checking speed and memory.</p>
+    </section>
+    <section class="panel"><h2>02 / Keep your progress</h2>
+      <p>Checkpoints include the weights, Adam optimizer state, data sampler, and training settings.</p>
+      <div class="actions"><button id="download" disabled>Download checkpoint</button><button id="restore" disabled>Restore autosave</button><button id="restoreBest" disabled>Restore best</button><button id="import" disabled>Import checkpoint</button></div>
+      <input type="file" id="importFile" accept=".json,application/json">
+      <p class="small" id="saved">No checkpoint saved in this session.</p>
+      <p class="small">Autosaves live in this browser and may be evicted by iOS. Import a downloaded checkpoint to continue on another device. Training and generation work without calling an AI service.</p>
+    </section>
+    <section class="panel wide"><h2>03 / Watch it learn</h2><p class="small">Training loss is sampled every 10 steps; validation runs every 200 steps and at run completion. The best checkpoint is saved separately. Training stops after 10 checks without improvement. Compare validation at the same context and batch size; chapter holdout cannot rule out memorization of repeated passages.</p><canvas id="chart" aria-label="Training loss chart" role="img"></canvas><pre id="log" aria-live="off">Ready for your first run.</pre></section>
+    <section class="panel wide"><h2>04 / Give it a beginning</h2>
+      <label>Prompt<textarea id="prompt">In the beginning</textarea></label>
+      <div class="fields" style="margin-top:14px"><label>New bytes<input id="newBytes" type="number" value="160" min="1" max="1000"></label><label>Temperature<input id="temperature" type="number" value="0.8" min="0.1" max="2" step="0.1"></label></div>
+      <div class="actions"><button class="primary" id="generate" disabled>Generate continuation</button></div><p class="output" id="output">Your model’s words will appear here.</p>
+      <p class="small">An untrained model produces noise. A trained model may imitate biblical language and invent verses. This is a text continuation experiment, not a scripture lookup or a question-answering assistant.</p>
+    </section>
+  </div>
+  <footer>RMSNorm · rotary positions · SwiGLU · tied embeddings · AdamW · UTF-8 bytes. See <a href="README.md">README</a> for setup, architecture, and limitations. No pretrained weights.</footer>
+</main><script type="module" src="app.mjs"></script></body></html>
